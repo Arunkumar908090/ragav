@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>DevOps Task Manager</title>
+
+</head>
+
+
+<body style="
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f3f4f6;
+">
+
+
+<!-- Header -->
+
+<div style="
+    background:#1f2937;
+    color:white;
+    padding:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+">
+
+
+    <div>
+
+        <h1 style="
+            margin:0;
+        ">
+            DevOps Task Manager
+        </h1>
+
+        <p style="
+            margin:5px 0 0 0;
+            color:#d1d5db;
+        ">
+            Welcome to your dashboard
+        </p>
+
+    </div>
+
+
+    <div style="
+        display:flex;
+        align-items:center;
+        gap:15px;
+    ">
+
+
+        <img
+            id="profileImage"
+            src=""
+            style="
+                width:50px;
+                height:50px;
+                object-fit:cover;
+                border-radius:50%;
+                border:2px solid white;
+                display:none;
+            "
+        >
+
+
+        <span id="username">
+            User
+        </span>
+
+
+        <button
+            onclick="logout()"
+            style="
+                padding:8px 15px;
+                background:#dc2626;
+                color:white;
+                border:none;
+                border-radius:5px;
+                cursor:pointer;
+            "
+        >
+            Logout
+        </button>
+
+
+    </div>
+
+</div>
+
+
+<!-- Main Container -->
+
+<div style="
+    width:90%;
+    max-width:900px;
+    margin:30px auto;
+">
+
+
+    <!-- Home Image -->
+
+    <div style="
+        background:white;
+        padding:25px;
+        border-radius:10px;
+        box-shadow:0 3px 12px rgba(0,0,0,0.1);
+        margin-bottom:25px;
+        text-align:center;
+    ">
+
+
+        <h2>
+            Home Page Image
+        </h2>
+
+
+        <img
+            id="homeImage"
+            src=""
+            style="
+                width:100%;
+                max-height:300px;
+                object-fit:cover;
+                border-radius:8px;
+                display:none;
+                margin-bottom:15px;
+            "
+        >
+
+
+        <input
+            id="homeImageInput"
+            type="file"
+            accept="image/*"
+            style="
+                margin-bottom:10px;
+            "
+        >
+
+
+        <br>
+
+
+        <button
+            onclick="uploadHomeImage()"
+            style="
+                padding:10px 20px;
+                background:#2563eb;
+                color:white;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+            "
+        >
+            Upload Home Image
+        </button>
+
+
+        <p id="uploadMessage"></p>
+
+
+    </div>
+
+
+    <!-- Add Task -->
+
+    <div style="
+        background:white;
+        padding:25px;
+        border-radius:10px;
+        box-shadow:0 3px 12px rgba(0,0,0,0.1);
+        margin-bottom:25px;
+    ">
+
+
+        <h2>
+            Add New Task
+        </h2>
+
+
+        <div style="
+            display:flex;
+            gap:10px;
+        ">
+
+
+            <input
+                id="taskInput"
+                type="text"
+                placeholder="Enter task..."
+                style="
+                    flex:1;
+                    padding:12px;
+                    border:1px solid #d1d5db;
+                    border-radius:6px;
+                "
+            >
+
+
+            <button
+                onclick="addTask()"
+                style="
+                    padding:12px 20px;
+                    background:#2563eb;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    cursor:pointer;
+                "
+            >
+                Add Task
+            </button>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- Tasks -->
+
+    <div style="
+        background:white;
+        padding:25px;
+        border-radius:10px;
+        box-shadow:0 3px 12px rgba(0,0,0,0.1);
+    ">
+
+
+        <h2>
+            Tasks
+        </h2>
+
+
+        <div id="taskList">
+
+            <p>
+                Loading tasks...
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+const BACKEND_URL = "http://localhost:5000";
+
+const API_URL =
+    `${BACKEND_URL}/api/tasks`;
+
+
+// -------------------------
+// Load User Information
+// -------------------------
+
+const username =
+    localStorage.getItem("username");
+
+const savedProfileImage =
+    localStorage.getItem("profileImage");
+
+
+if (username) {
+
+    document.getElementById("username").innerText =
+        username;
+
+}
+
+
+if (savedProfileImage) {
+
+    const profile =
+        document.getElementById("profileImage");
+
+    profile.src = savedProfileImage;
+
+    profile.style.display = "block";
+
+}
+
+
+// -------------------------
+// Upload Home Image
+// -------------------------
+
+async function uploadHomeImage() {
+
+    const file =
+        document.getElementById("homeImageInput").files[0];
+
+    const message =
+        document.getElementById("uploadMessage");
+
+
+    if (!file) {
+
+        message.innerText =
+            "Please select an image.";
+
+        message.style.color = "red";
+
+        return;
+
+    }
+
+
+    const formData = new FormData();
+
+    formData.append("image", file);
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${BACKEND_URL}/api/upload-home-image`,
+                {
+                    method:"POST",
+                    body:formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            document.getElementById("homeImage").src =
+                data.imageUrl;
+
+            document.getElementById("homeImage").style.display =
+                "block";
+
+
+            localStorage.setItem(
+                "homeImage",
+                data.imageUrl
+            );
+
+
+            message.innerText =
+                "Home image uploaded successfully.";
+
+            message.style.color = "green";
+
+        } else {
+
+            message.innerText =
+                data.message;
+
+            message.style.color = "red";
+
+        }
+
+
+    } catch(error) {
+
+        message.innerText =
+            "Unable to upload image.";
+
+        message.style.color = "red";
+
+        console.error(error);
+
+    }
+
+}
+
+
+// -------------------------
+// Load Saved Home Image
+// -------------------------
+
+const savedHomeImage =
+    localStorage.getItem("homeImage");
+
+
+if (savedHomeImage) {
+
+    const homeImage =
+        document.getElementById("homeImage");
+
+    homeImage.src =
+        savedHomeImage;
+
+    homeImage.style.display =
+        "block";
+
+}
+
+
+// -------------------------
+// Tasks
+// -------------------------
+
+window.onload = function() {
+
+    loadTasks();
+
+};
+
+
+async function loadTasks() {
+
+    try {
+
+        const response =
+            await fetch(API_URL);
+
+        const tasks =
+            await response.json();
+
+        displayTasks(tasks);
+
+    } catch(error) {
+
+        document.getElementById("taskList").innerHTML = `
+            <p style="color:red;">
+                Unable to connect to backend.
+            </p>
+        `;
+
+    }
+
+}
+
+
+function displayTasks(tasks) {
+
+    const taskList =
+        document.getElementById("taskList");
+
+    taskList.innerHTML = "";
+
+
+    if (tasks.length === 0) {
+
+        taskList.innerHTML = `
+            <p style="color:#6b7280;">
+                No tasks available.
+            </p>
+        `;
+
+        return;
+
+    }
+
+
+    tasks.forEach(task => {
+
+        const taskDiv =
+            document.createElement("div");
+
+
+        taskDiv.style.cssText = `
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:15px;
+            margin-bottom:10px;
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            border-radius:7px;
+        `;
+
+
+        const title =
+            document.createElement("span");
+
+
+        title.innerText =
+            task.title;
+
+
+        title.style.cssText = `
+            font-size:16px;
+            color:${task.completed ? "#9ca3af" : "#111827"};
+            text-decoration:${task.completed ? "line-through" : "none"};
+        `;
+
+
+        const buttons =
+            document.createElement("div");
+
+
+        const completeButton =
+            document.createElement("button");
+
+
+        completeButton.innerText =
+            task.completed ? "Undo" : "Complete";
+
+
+        completeButton.style.cssText = `
+            margin-right:8px;
+            padding:8px 12px;
+            background:#16a34a;
+            color:white;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+        `;
+
+
+        completeButton.onclick =
+            function() {
+
+                updateTask(task.id);
+
+            };
+
+
+        const deleteButton =
+            document.createElement("button");
+
+
+        deleteButton.innerText =
+            "Delete";
+
+
+        deleteButton.style.cssText = `
+            padding:8px 12px;
+            background:#dc2626;
+            color:white;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+        `;
+
+
+        deleteButton.onclick =
+            function() {
+
+                deleteTask(task.id);
+
+            };
+
+
+        buttons.appendChild(
+            completeButton
+        );
+
+        buttons.appendChild(
+            deleteButton
+        );
+
+
+        taskDiv.appendChild(title);
+
+        taskDiv.appendChild(buttons);
+
+        taskList.appendChild(taskDiv);
+
+    });
+
+}
+
+
+// Add task
+
+async function addTask() {
+
+    const input =
+        document.getElementById("taskInput");
+
+    const title =
+        input.value.trim();
+
+
+    if (!title) {
+
+        alert("Please enter a task.");
+
+        return;
+
+    }
+
+
+    await fetch(API_URL, {
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            title:title
+        })
+
+    });
+
+
+    input.value = "";
+
+    loadTasks();
+
+}
+
+
+// Update task
+
+async function updateTask(id) {
+
+    await fetch(
+        `${API_URL}/${id}`,
+        {
+            method:"PUT"
+        }
+    );
+
+    loadTasks();
+
+}
+
+
+// Delete task
+
+async function deleteTask(id) {
+
+    await fetch(
+        `${API_URL}/${id}`,
+        {
+            method:"DELETE"
+        }
+    );
+
+    loadTasks();
+
+}
+
+
+// Logout
+
+function logout() {
+
+    localStorage.clear();
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

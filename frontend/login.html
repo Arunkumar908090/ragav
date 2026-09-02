@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>DevOps Login</title>
+
+</head>
+
+
+<body style="
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f3f4f6;
+">
+
+
+<div style="
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+">
+
+
+    <div style="
+        width:400px;
+        background:white;
+        padding:35px;
+        border-radius:12px;
+        box-shadow:0 5px 20px rgba(0,0,0,0.15);
+        text-align:center;
+    ">
+
+
+        <h1 style="
+            color:#1f2937;
+            margin-bottom:10px;
+        ">
+            DevOps Task Manager
+        </h1>
+
+
+        <p style="
+            color:#6b7280;
+            margin-bottom:25px;
+        ">
+            Login to continue
+        </p>
+
+
+        <!-- Image Preview -->
+
+        <img
+            id="profilePreview"
+            src=""
+            style="
+                width:120px;
+                height:120px;
+                object-fit:cover;
+                border-radius:50%;
+                border:3px solid #2563eb;
+                display:none;
+                margin:0 auto 15px auto;
+            "
+        >
+
+
+        <!-- Image Upload -->
+
+        <input
+            id="profileImage"
+            type="file"
+            accept="image/*"
+            onchange="previewImage()"
+            style="
+                width:100%;
+                margin-bottom:20px;
+            "
+        >
+
+
+        <input
+            id="username"
+            type="text"
+            placeholder="Username"
+            style="
+                width:100%;
+                box-sizing:border-box;
+                padding:13px;
+                margin-bottom:15px;
+                border:1px solid #d1d5db;
+                border-radius:6px;
+                font-size:15px;
+            "
+        >
+
+
+        <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            style="
+                width:100%;
+                box-sizing:border-box;
+                padding:13px;
+                margin-bottom:20px;
+                border:1px solid #d1d5db;
+                border-radius:6px;
+                font-size:15px;
+            "
+        >
+
+
+        <button
+            onclick="login()"
+            style="
+                width:100%;
+                padding:13px;
+                background:#2563eb;
+                color:white;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+                font-size:16px;
+            "
+        >
+            Login
+        </button>
+
+
+        <p
+            id="message"
+            style="
+                margin-top:15px;
+                font-weight:bold;
+            "
+        ></p>
+
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+const BACKEND_URL = "http://localhost:5000";
+
+
+// Preview selected image
+
+function previewImage() {
+
+    const file =
+        document.getElementById("profileImage").files[0];
+
+    const preview =
+        document.getElementById("profilePreview");
+
+
+    if (!file) {
+
+        preview.style.display = "none";
+
+        return;
+
+    }
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = function(event) {
+
+        preview.src = event.target.result;
+
+        preview.style.display = "block";
+
+    };
+
+
+    reader.readAsDataURL(file);
+
+}
+
+
+// Login
+
+async function login() {
+
+    const username =
+        document.getElementById("username").value;
+
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("message");
+
+
+    if (!username || !password) {
+
+        message.innerText =
+            "Please enter username and password.";
+
+        message.style.color = "red";
+
+        return;
+
+    }
+
+
+    try {
+
+        const response = await fetch(
+            `${BACKEND_URL}/api/login`,
+            {
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify({
+                    username:username,
+                    password:password
+                })
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if (!response.ok) {
+
+            message.innerText = data.message;
+
+            message.style.color = "red";
+
+            return;
+
+        }
+
+
+        // Upload profile image if selected
+
+        const image =
+            document.getElementById("profileImage").files[0];
+
+
+        if (image) {
+
+            const formData = new FormData();
+
+            formData.append("image", image);
+
+
+            const uploadResponse =
+                await fetch(
+                    `${BACKEND_URL}/api/upload-profile-image`,
+                    {
+                        method:"POST",
+                        body:formData
+                    }
+                );
+
+
+            const uploadData =
+                await uploadResponse.json();
+
+
+            if (uploadData.success) {
+
+                localStorage.setItem(
+                    "profileImage",
+                    uploadData.imageUrl
+                );
+
+            }
+
+        }
+
+
+        localStorage.setItem(
+            "username",
+            username
+        );
+
+
+        message.innerText =
+            "Login successful!";
+
+        message.style.color = "green";
+
+
+        setTimeout(function() {
+
+            window.location.href = "index.html";
+
+        }, 1000);
+
+
+    } catch(error) {
+
+        message.innerText =
+            "Cannot connect to backend.";
+
+        message.style.color = "red";
+
+        console.error(error);
+
+    }
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
