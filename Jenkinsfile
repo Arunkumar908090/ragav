@@ -13,5 +13,16 @@ pipeline {
                 sh 'mvn clean install'
             }
         }
+        stage('stage2') {
+            steps {
+                sh 'mvn test'
+            }
+        }
     }
-}
+    post {
+            success {
+                // Captures any JAR file generated inside target directories
+                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: false
+            }
+        }
+    }
