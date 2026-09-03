@@ -8,7 +8,8 @@ pipeline {
     stages {
         stage('stage1') {
             steps {
-                 sh 'rm -rf frontend/node/ frontend/node_modules/ backend/node/ backend/node_modules/'
+                deleteDir()
+                checkout scm
                 sh 'mvn clean install'
             }
         }
